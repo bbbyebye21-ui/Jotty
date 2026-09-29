@@ -2,79 +2,186 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jotty.exe - SCP-XXXX Terminal</title>
+    <title>Jotty AI Assistant</title>
     <style>
+        :root {
+            --bg-color: #121214;
+            --panel-bg: #18181b;
+            --border-color: #27272a;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --jotty-bg: #202025;
+            --user-bg: #2e2e38;
+        }
+
         body {
-            background-color: #0c0c0c;
-            color: #33ff33;
-            font-family: "Courier New", Courier, monospace;
-            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
-        .terminal-window {
-            max-width: 650px;
-            margin: 30px auto;
-            border: 2px solid #33ff33;
-            background: #000;
-            box-shadow: 0 0 15px rgba(51, 255, 51, 0.2);
-            padding: 15px;
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90vh;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
         }
-        .header {
-            border-bottom: 1px dashed #33ff33;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
+
+        .app-header {
+            padding: 16px 20px;
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        #output {
-            height: 320px;
+
+        .app-title-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+        }
+
+        .app-name {
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: -0.3px;
+        }
+
+        .app-model {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        #chat-stream {
+            flex: 1;
             overflow-y: auto;
-            margin-bottom: 15px;
-            white-space: pre-wrap;
-            font-size: 13px;
-            line-height: 1.4;
-            padding-right: 5px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
         }
-        .input-area {
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .message.jotty {
+            background: var(--jotty-bg);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user {
+            background: var(--user-bg);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.system {
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            align-self: center;
+            text-align: center;
+            padding: 4px;
+            border: none;
+        }
+
+        .input-container {
+            padding: 16px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
             display: flex;
             gap: 10px;
         }
+
         input[type="text"] {
             flex: 1;
-            background: #000;
-            border: 1px solid #33ff33;
-            color: #33ff33;
-            padding: 8px;
-            font-family: monospace;
-            font-size: 13px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
         }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+        }
+
         button {
-            background: #33ff33;
-            color: #000;
+            background: var(--accent-color);
+            color: white;
             border: none;
-            padding: 8px 15px;
-            font-weight: bold;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            font-family: monospace;
+            transition: background 0.2s;
         }
+
         button:hover {
-            background: #26b326;
+            background: var(--accent-hover);
         }
     </style>
 </head>
 <body>
 
-    <div class="terminal-window">
-        <div class="header">
-            [SECURE-TERM v1.0.4] -- PROCESS: jotty.exe -- STATUS: CONTAINED
+    <div class="app-container">
+        <div class="app-header">
+            <div class="app-title-area">
+                <div class="status-dot"></div>
+                <div class="app-name">Jotty Workspace Agent</div>
+            </div>
+            <div class="app-model">gemini-3.5-flash-lite</div>
         </div>
         
-        <div id="output">[JOTTY]: Oh, look, another expendable idiot. Do you want me to help you read this file, or do you need to sound out the big boy words one syllable at a time, you illiterate piece of shit?
-</div>
+        <div id="chat-stream">
+            <div class="message jotty">Oh, look, another expendable idiot. Do you want me to help you read this file, or do you need to sound out the big boy words one syllable at a time, you illiterate piece of shit?</div>
+        </div>
         
-        <div class="input-area">
-            <span style="padding-top: 6px;">></span>
-            <input type="text" id="userInput" placeholder="Type a response to Jotty..." autofocus>
-            <button onclick="talkToJotty()">Transmit</button>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Ask Jotty something..." autofocus>
+            <button onclick="sendToJotty()">Send</button>
         </div>
     </div>
 
@@ -82,28 +189,28 @@
         const API_KEY = "AQ.Ab8RN6I_V4XHHb3YVUv3WS3uSZ-AdANoXL2F5nuxp2l3SQ0Jrg";
         const MODEL = "gemini-3.5-flash-lite";
 
-        const outputBox = document.getElementById('output');
+        const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
 
         inputField.addEventListener("keypress", function(e) {
             if (e.key === "Enter") {
-                talkToJotty();
+                sendToJotty();
             }
         });
 
-        async function talkToJotty() {
+        async function sendToJotty() {
             const userText = inputField.value.trim();
             if (!userText) return;
 
-            outputBox.innerHTML += `\n> ${userText}\n`;
+            // Append User Message
+            appendMessage(userText, 'user');
             inputField.value = "";
-            outputBox.scrollTop = outputBox.scrollHeight;
 
-            outputBox.innerHTML += `[SYSTEM]: Jotty is processing your garbage input...\n`;
-            outputBox.scrollTop = outputBox.scrollHeight;
+            // System typing indicator
+            const loadingId = appendMessage("Jotty is thinking...", 'system');
 
-            // Clean endpoint without query parameter
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+            // Fixed endpoint query string auth that prevents credential errors
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
             
             const payload = {
                 contents: [
@@ -135,10 +242,7 @@ Your personality and tone:
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'x-goog-api-key': API_KEY // Passed via header securely
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -156,21 +260,32 @@ Your personality and tone:
                 }
             }
 
+            // Remove loading indicator
+            document.getElementById(loadingId)?.remove();
+
             if (data && data.error) {
                 console.error("API Error Details:", data.error);
-                outputBox.innerHTML += `\n[SYSTEM ERROR]: ${data.error.message}\n`;
-                outputBox.scrollTop = outputBox.scrollHeight;
+                appendMessage(`Error: ${data.error.message}`, 'system');
                 return;
             }
 
             if (data && data.candidates && data.candidates[0]) {
                 const aiReply = data.candidates[0].content.parts[0].text;
-                outputBox.innerHTML += `\n[JOTTY]: ${aiReply}\n`;
-                outputBox.scrollTop = outputBox.scrollHeight;
+                appendMessage(aiReply, 'jotty');
             } else {
-                outputBox.innerHTML += `\n[SYSTEM ERROR]: No response received from Jotty.\n`;
-                outputBox.scrollTop = outputBox.scrollHeight;
+                appendMessage("Error: Failed to fetch model response.", 'system');
             }
+        }
+
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            const msgId = 'msg-' + Math.random().toString(36.substr(2, 9));
+            msgDiv.id = msgId;
+            msgDiv.className = `message ${sender}`;
+            msgDiv.textContent = text;
+            chatStream.appendChild(msgDiv);
+            chatStream.scrollTop = chatStream.scrollHeight;
+            return msgId;
         }
     </script>
 </body>
