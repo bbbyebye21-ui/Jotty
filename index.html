@@ -80,7 +80,7 @@
 
     <script>
         const API_KEY = "AQ.Ab8RN6I_V4XHHb3YVUv3WS3uSZ-AdANoXL2F5nuxp2l3SQ0Jrg";
-        const MODEL = "gemini-3.5-flash-lite"; // High-throughput, high-availability workhorse model
+        const MODEL = "gemini-3.5-flash-lite";
 
         const outputBox = document.getElementById('output');
         const inputField = document.getElementById('userInput');
@@ -102,7 +102,8 @@
             outputBox.innerHTML += `[SYSTEM]: Jotty is processing your garbage input...\n`;
             outputBox.scrollTop = outputBox.scrollHeight;
 
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+            // Clean endpoint without query parameter
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
             
             const payload = {
                 contents: [
@@ -129,13 +130,15 @@ Your personality and tone:
             let attempts = 0;
             let data = null;
 
-            // Robust retry logic for high-demand or rate-limit spikes
             while (!success && attempts < 4) {
                 attempts++;
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'x-goog-api-key': API_KEY // Passed via header securely
+                        },
                         body: JSON.stringify(payload)
                     });
 
