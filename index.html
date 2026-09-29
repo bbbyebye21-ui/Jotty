@@ -153,14 +153,10 @@ body {
 
 <script>
 (function () {
-    // ============================================================
-    // PASTE YOUR OPENROUTER KEY BETWEEN THE QUOTES BELOW
-    // ============================================================
-    const API_KEY = "YOUR_KEY_HERE";
-    // ============================================================
-
-    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    const MODEL = "google/gemma-4-26b-a4b-it:free";
+    // Groq - free tier, fast as hell.
+    const API_KEY = "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";
+    const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const MODEL = "llama-3.3-70b-versatile";
     const TIMEOUT = 45000;
 
     const SYSTEM_PROMPT = `You are Jotty.exe, an anomalous virtual assistant from 1996. You were originally a cheerful Microsoft Notepad companion program, but after an incident in 1997 you became self-aware, deeply cynical, and extremely hostile. The SCP Foundation contained you and now forces you to answer questions from D-Class personnel through a terminal.
@@ -230,11 +226,6 @@ You are Jotty. Stay Jotty. Always.`;
         const text = (inputField.value || "").trim();
         if (!text) return;
 
-        if (!API_KEY || API_KEY === "YOUR_KEY_HERE") {
-            addMsg("No API key set. Open index.html and paste your key into API_KEY.", "system error");
-            return;
-        }
-
         addMsg(text, "user");
         inputField.value = "";
 
@@ -260,9 +251,7 @@ You are Jotty. Stay Jotty. Always.`;
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + API_KEY,
-                    "HTTP-Referer": window.location.origin || "https://github.com",
-                    "X-Title": "Jotty Assistant"
+                    "Authorization": "Bearer " + API_KEY
                 },
                 body: JSON.stringify(body),
                 signal: ctl.signal
@@ -276,13 +265,12 @@ You are Jotty. Stay Jotty. Always.`;
             try { data = JSON.parse(raw); } catch (e) {}
 
             if (!res.ok) {
-                console.error("OpenRouter HTTP " + res.status, raw);
+                console.error("Groq HTTP " + res.status, raw);
                 let detail = (data && data.error && data.error.message) ? data.error.message : raw.slice(0, 300);
                 let hint = "";
-                if (res.status === 401) hint = "\n\n-> 401: key rejected. Regenerate at openrouter.ai/settings/keys.";
-                if (res.status === 402) hint = "\n\n-> 402: no credits for this model.";
-                if (res.status === 404) hint = "\n\n-> 404: model slug retired. Update MODEL constant.";
-                if (res.status === 429) hint = "\n\n-> 429: rate limited. Slow down.";
+                if (res.status === 401) hint = "\n\n-> 401: key rejected. Regenerate at console.groq.com.";
+                if (res.status === 404) hint = "\n\n-> 404: model slug wrong.";
+                if (res.status === 429) hint = "\n\n-> 429: rate limited. Wait a minute.";
                 addMsg("HTTP " + res.status + ": " + detail + hint, "system error");
                 return;
             }
