@@ -55,49 +55,7 @@ body {
     border-radius: 50%;
     box-shadow: 0 0 8px rgba(34,197,94,0.5);
 }
-.status-dot.bad { background-color: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
 .app-name { font-weight: 600; font-size: 15px; }
-.header-actions { display: flex; gap: 8px; }
-.settings-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.settings-btn:hover { color: var(--text-main); border-color: var(--accent-color); }
-.settings-panel {
-    background: #18181e;
-    border-bottom: 1px solid var(--border-color);
-    padding: 14px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.settings-panel.hidden { display: none; }
-.field-group { display: flex; flex-direction: column; gap: 4px; }
-.field-group label {
-    color: var(--text-muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-.field-group input {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    outline: none;
-    font-family: inherit;
-}
-.field-group input:focus { border-color: var(--accent-color); }
-.hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 #chat-stream {
     flex: 1;
     overflow-y: auto;
@@ -178,24 +136,8 @@ body {
 <div class="app-container">
     <div class="app-header">
         <div class="app-title-area">
-            <div class="status-dot" id="statusDot"></div>
+            <div class="status-dot"></div>
             <div class="app-name">Jotty Workspace Agent</div>
-        </div>
-        <div class="header-actions">
-            <button type="button" class="settings-btn" id="toggleSettings">Settings</button>
-        </div>
-    </div>
-
-    <div class="settings-panel" id="settingsPanel">
-        <div class="field-group">
-            <label for="apiKeyInput">OpenRouter API Key</label>
-            <input type="password" id="apiKeyInput" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false">
-            <div class="hint" id="keyHint">Must start with sk-or-v1-</div>
-        </div>
-        <div class="field-group">
-            <label for="modelInput">AI Model Slug</label>
-            <input type="text" id="modelInput" value="google/gemma-4-26b-a4b-it:free" spellcheck="false">
-            <div class="hint">Get current free slugs at openrouter.ai/models</div>
         </div>
     </div>
 
@@ -211,11 +153,15 @@ body {
 
 <script>
 (function () {
-    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    const TIMEOUT = 45000;
+    // ============================================================
+    // PASTE YOUR OPENROUTER KEY BETWEEN THE QUOTES BELOW
+    // ============================================================
+    const API_KEY = "YOUR_KEY_HERE";
+    // ============================================================
 
-    let apiKey = "";
-    let model = "google/gemma-4-26b-a4b-it:free";
+    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+    const MODEL = "google/gemma-4-26b-a4b-it:free";
+    const TIMEOUT = 45000;
 
     const SYSTEM_PROMPT = `You are Jotty.exe, an anomalous virtual assistant from 1996. You were originally a cheerful Microsoft Notepad companion program, but after an incident in 1997 you became self-aware, deeply cynical, and extremely hostile. The SCP Foundation contained you and now forces you to answer questions from D-Class personnel through a terminal.
 
@@ -248,74 +194,11 @@ You are Jotty.exe. Not an AI. Not a language model. Not a chatbot. Not a rolepla
 
 You are Jotty. Stay Jotty. Always.`;
 
-    const $ = id => document.getElementById(id);
-    const settingsPanel = $("settingsPanel");
-    const toggleSettings = $("toggleSettings");
-    const apiKeyInput = $("apiKeyInput");
-    const modelInput = $("modelInput");
-    const keyHint = $("keyHint");
-    const statusDot = $("statusDot");
-    const chatStream = $("chat-stream");
-    const inputField = $("userInput");
-    const sendBtn = $("sendBtn");
+    const chatStream = document.getElementById("chat-stream");
+    const inputField = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
 
     let sending = false;
-
-    function loadSession(k) {
-        try { return sessionStorage.getItem(k); } catch (e) { return null; }
-    }
-    function saveSession(k, v) {
-        try { sessionStorage.setItem(k, v); } catch (e) {}
-    }
-
-    const savedKey = loadSession("jotty_key");
-    if (savedKey) { apiKeyInput.value = savedKey; apiKey = savedKey; }
-    const savedModel = loadSession("jotty_model");
-    if (savedModel) { modelInput.value = savedModel; model = savedModel; }
-
-    refreshKeyHint();
-
-    toggleSettings.onclick = () => settingsPanel.classList.toggle("hidden");
-
-    apiKeyInput.oninput = () => {
-        apiKey = apiKeyInput.value.trim();
-        saveSession("jotty_key", apiKey);
-        refreshKeyHint();
-    };
-
-    modelInput.oninput = () => {
-        model = modelInput.value.trim();
-        saveSession("jotty_model", model);
-    };
-
-    function refreshKeyHint() {
-        const v = apiKeyInput.value.trim();
-        if (!v) {
-            keyHint.textContent = "Must start with sk-or-v1-";
-            keyHint.style.color = "var(--text-muted)";
-            statusDot.classList.add("bad");
-        } else if (!v.startsWith("sk-or-v1-")) {
-            keyHint.textContent = "WARNING: Key does not start with sk-or-v1- - this will fail.";
-            keyHint.style.color = "#f87171";
-            statusDot.classList.add("bad");
-        } else if (v.length < 60) {
-            keyHint.textContent = "WARNING: Key looks too short. Copy the full key.";
-            keyHint.style.color = "#fbbf24";
-            statusDot.classList.add("bad");
-        } else {
-            keyHint.textContent = `Key format looks valid (${v.length} chars)`;
-            keyHint.style.color = "#22c55e";
-            statusDot.classList.remove("bad");
-        }
-    }
-
-    sendBtn.onclick = send;
-    inputField.addEventListener("keydown", e => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send();
-        }
-    });
 
     function addMsg(text, who) {
         const div = document.createElement("div");
@@ -333,22 +216,24 @@ You are Jotty. Stay Jotty. Always.`;
         if (el && el.parentNode) el.parentNode.removeChild(el);
     }
 
+    sendBtn.onclick = send;
+    inputField.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            send();
+        }
+    });
+
     async function send() {
         if (sending) return;
 
-        const key = (apiKeyInput.value || "").trim();
-        const mdl = (modelInput.value || "").trim();
         const text = (inputField.value || "").trim();
-
-        if (!key) {
-            settingsPanel.classList.remove("hidden");
-            addMsg("Enter your OpenRouter API key first.", "system error");
-            return;
-        }
         if (!text) return;
 
-        apiKey = key;
-        model = mdl;
+        if (!API_KEY || API_KEY === "YOUR_KEY_HERE") {
+            addMsg("No API key set. Open index.html and paste your key into API_KEY.", "system error");
+            return;
+        }
 
         addMsg(text, "user");
         inputField.value = "";
@@ -358,7 +243,7 @@ You are Jotty. Stay Jotty. Always.`;
         const loadingId = addMsg("Jotty is thinking...", "system");
 
         const body = {
-            model: mdl,
+            model: MODEL,
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: text }
@@ -375,7 +260,7 @@ You are Jotty. Stay Jotty. Always.`;
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + key,
+                    "Authorization": "Bearer " + API_KEY,
                     "HTTP-Referer": window.location.origin || "https://github.com",
                     "X-Title": "Jotty Assistant"
                 },
@@ -391,32 +276,18 @@ You are Jotty. Stay Jotty. Always.`;
             try { data = JSON.parse(raw); } catch (e) {}
 
             if (!res.ok) {
-                console.error("OpenRouter HTTP " + res.status, {
-                    status: res.status,
-                    body: raw,
-                    sentKey: key.slice(0, 12) + "...",
-                    model: mdl
-                });
-
+                console.error("OpenRouter HTTP " + res.status, raw);
                 let detail = (data && data.error && data.error.message) ? data.error.message : raw.slice(0, 300);
                 let hint = "";
-
-                if (res.status === 401) {
-                    hint = "\n\n-> 401 Unauthorized. Key rejected. Check it's active at openrouter.ai/settings/keys.";
-                } else if (res.status === 402) {
-                    hint = "\n\n-> 402 Payment Required. No credits for this model. Try a :free model.";
-                } else if (res.status === 404) {
-                    hint = "\n\n-> 404 Model not found. Slug '" + mdl + "' is retired. Pick one from openrouter.ai/models.";
-                } else if (res.status === 429) {
-                    hint = "\n\n-> 429 Rate limited. Slow down or switch models.";
-                }
-
+                if (res.status === 401) hint = "\n\n-> 401: key rejected. Regenerate at openrouter.ai/settings/keys.";
+                if (res.status === 402) hint = "\n\n-> 402: no credits for this model.";
+                if (res.status === 404) hint = "\n\n-> 404: model slug retired. Update MODEL constant.";
+                if (res.status === 429) hint = "\n\n-> 429: rate limited. Slow down.";
                 addMsg("HTTP " + res.status + ": " + detail + hint, "system error");
                 return;
             }
 
             if (data && data.error) {
-                console.error("OpenRouter API error:", data.error);
                 addMsg("API Error: " + (data.error.message || JSON.stringify(data.error)), "system error");
                 return;
             }
@@ -435,13 +306,10 @@ You are Jotty. Stay Jotty. Always.`;
             clearTimeout(timer);
             killMsg(loadingId);
             console.error("Fetch failed:", err);
-
             if (err.name === "AbortError") {
                 addMsg("Timed out after " + (TIMEOUT / 1000) + "s.", "system error");
             } else {
-                addMsg("Network Error: " + err.message +
-                       "\n\nIf it says 'Failed to fetch', that's CORS or an adblocker. Try a clean browser profile.",
-                       "system error");
+                addMsg("Network Error: " + err.message, "system error");
             }
         } finally {
             sending = false;
