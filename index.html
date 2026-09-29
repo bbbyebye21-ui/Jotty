@@ -177,13 +177,13 @@
 
     <script>
         const API_KEY = "AQ.Ab8RN6KHCW8mVcjL5vgvb6dNvSVqp4515yE6j-zgIHt2emjxxw";
-        const MODEL = "gemini-3.5-flash-lite";
+        // Switched to gemini-1.5-flash so it accepts standard API keys without OAuth errors
+        const MODEL = "gemini-1.5-flash";
 
         const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
 
-        // Hook up both Enter key and Button click cleanly
         sendBtn.addEventListener('click', sendToJotty);
         inputField.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
