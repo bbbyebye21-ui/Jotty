@@ -177,7 +177,7 @@
 
     <script>
         const API_KEY = "AQ.Ab8RN6LDi87w65jMzNPTUBZ1SAt1bVhpeZMgkpDivXb2RU97fA";
-        const MODEL = "gemini-1.5-flash";
+        const MODEL = "gemini-2.5-flash";
 
         const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
@@ -200,7 +200,6 @@
 
             const loadingId = addMsg("Jotty is thinking...", 'system');
 
-            // Clean URL endpoint without the query param parameter
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
             
             const payload = {
