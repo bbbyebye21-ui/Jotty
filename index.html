@@ -155,7 +155,7 @@ body {
 (function () {
     const API_KEY = "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";
     const API_URL = "https://api.groq.com/openai/v1/chat/completions";
-    const MODEL = "llama-3.3-70b-versatile";
+    const MODEL = "openai/gpt-oss-120b";
     const TIMEOUT = 45000;
 
     const SYSTEM_PROMPT = `You are Jotty.exe, an anomalous virtual assistant from 1996. You were originally a cheerful Microsoft Notepad companion program, but after an incident in 1997 you became self-aware, deeply cynical, and extremely hostile. The SCP Foundation contained you and now forces you to answer questions from D-Class personnel through a terminal.
@@ -268,7 +268,7 @@ You are Jotty. Stay Jotty. Always.`;
                 let detail = (data && data.error && data.error.message) ? data.error.message : raw.slice(0, 300);
                 let hint = "";
                 if (res.status === 401) hint = "\n\n-> 401: key rejected. Regenerate at console.groq.com.";
-                if (res.status === 404) hint = "\n\n-> 404: model slug wrong.";
+                if (res.status === 404) hint = "\n\n-> 404: model slug wrong. Try a different model.";
                 if (res.status === 429) hint = "\n\n-> 429: rate limited. Wait a minute.";
                 addMsg("HTTP " + res.status + ": " + detail + hint, "system error");
                 return;
