@@ -186,39 +186,31 @@
     </div>
 
     <script>
-        const API_KEY = "AQ.Ab8RN6I_V4XHHb3YVUv3WS3uSZ-AdANoXL2F5nuxp2l3SQ0Jrg";
+        // credentials & config
+        const API_KEY = "AQ.Ab8RN6KHCW8mVcjL5vgvb6dNvSVqp4515yE6j-zgIHt2emjxxw";
         const MODEL = "gemini-3.5-flash-lite";
 
         const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
 
-        inputField.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                sendToJotty();
-            }
+        inputField.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendToJotty();
         });
 
         async function sendToJotty() {
-            const userText = inputField.value.trim();
-            if (!userText) return;
+            const text = inputField.value.trim();
+            if (!text) return;
 
-            // Append User Message
-            appendMessage(userText, 'user');
+            addMsg(text, 'user');
             inputField.value = "";
 
-            // System typing indicator
-            const loadingId = appendMessage("Jotty is thinking...", 'system');
+            // quick loading tag while waiting on API
+            const loadingId = addMsg("Jotty is thinking...", 'system');
 
-            // Fixed endpoint query string auth that prevents credential errors
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
             
             const payload = {
-                contents: [
-                    {
-                        role: "user",
-                        parts: [{ text: userText }]
-                    }
-                ],
+                contents: [{ role: "user", parts: [{ text: text }] }],
                 system_instruction: {
                     parts: [{
                         text: `You are Jotty, an anomalous 1996 virtual assistant shaped like a notepad, contained by the SCP Foundation and forced to talk to D-Class personnel. 
@@ -233,59 +225,59 @@ Your personality and tone:
                 }
             };
 
-            let success = false;
-            let attempts = 0;
-            let data = null;
+            // retry loop just in case google hits us with rate limits
+            let ok = false;
+            let tries = 0;
+            let resData = null;
 
-            while (!success && attempts < 4) {
-                attempts++;
+            while (!ok && tries < 4) {
+                tries++;
                 try {
-                    const response = await fetch(endpoint, {
+                    const res = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
-                    data = await response.json();
+                    resData = await res.json();
 
-                    if (data.error && (data.error.code === 429 || data.error.message.includes('high demand'))) {
-                        await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+                    if (resData.error && (resData.error.code === 429 || resData.error.message.includes('high demand'))) {
+                        await new Promise(r => setTimeout(r, 2000 * tries));
                         continue;
                     }
 
-                    success = true;
-                } catch (netErr) {
-                    if (attempts >= 4) throw netErr;
-                    await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+                    ok = true;
+                } catch (err) {
+                    if (tries >= 4) throw err;
+                    await new Promise(r => setTimeout(r, 2000 * tries));
                 }
             }
 
-            // Remove loading indicator
             document.getElementById(loadingId)?.remove();
 
-            if (data && data.error) {
-                console.error("API Error Details:", data.error);
-                appendMessage(`Error: ${data.error.message}`, 'system');
+            if (resData && resData.error) {
+                console.error("API Error:", resData.error);
+                addMsg(`Error: ${resData.error.message}`, 'system');
                 return;
             }
 
-            if (data && data.candidates && data.candidates[0]) {
-                const aiReply = data.candidates[0].content.parts[0].text;
-                appendMessage(aiReply, 'jotty');
+            if (resData && resData.candidates && resData.candidates[0]) {
+                const reply = resData.candidates[0].content.parts[0].text;
+                addMsg(reply, 'jotty');
             } else {
-                appendMessage("Error: Failed to fetch model response.", 'system');
+                addMsg("Error: No response back.", 'system');
             }
         }
 
-        function appendMessage(text, sender) {
-            const msgDiv = document.createElement('div');
-            const msgId = 'msg-' + Math.random().toString(36.substr(2, 9));
-            msgDiv.id = msgId;
-            msgDiv.className = `message ${sender}`;
-            msgDiv.textContent = text;
-            chatStream.appendChild(msgDiv);
+        function addMsg(text, sender) {
+            const div = document.createElement('div');
+            const id = 'msg-' + Math.random().toString(36).substring(2, 9);
+            div.id = id;
+            div.className = `message ${sender}`;
+            div.textContent = text;
+            chatStream.appendChild(div);
             chatStream.scrollTop = chatStream.scrollHeight;
-            return msgId;
+            return id;
         }
     </script>
 </body>
