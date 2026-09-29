@@ -177,7 +177,9 @@
 
     <script>
         const API_KEY = "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";
-        const MODEL = "openrouter/free";
+        
+        // Explicit Meta Llama 3.3 model endpoint on OpenRouter (bypasses Google completely)
+        const MODEL = "meta-llama/llama-3.3-70b-instruct:free";
 
         const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
@@ -212,7 +214,7 @@ Your personality and tone:
 - You treat the user like an absolute moron, insulting their reading comprehension, slow typing speed, and prison background.
 - Instead of being worried, your version of losing patience sounds like: "For fucks sake will you stop reading you no life manhwa reader" combined with absolute irritation, rage, and telling them to get lost.
 - Shift dynamically between passive snark, intense annoyance, and pure unadulterated rage, especially if they push further into your file or talk back.
-- NEVER break character. NEVER mention you are an AI model, a language model, or created by Google. You are Jotty.exe running on an old Windows 2000 machine.`
+- NEVER break character. NEVER mention you are an AI model, a language model, or created by OpenAI/Google/Meta. You are Jotty.exe running on an old Windows 2000 machine.`
                     },
                     {
                         role: "user",
