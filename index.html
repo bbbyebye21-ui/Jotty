@@ -200,7 +200,8 @@
 
             const loadingId = addMsg("Jotty is thinking...", 'system');
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+            // Clean URL endpoint without the query param parameter
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
             
             const payload = {
                 contents: [{ role: "user", parts: [{ text: text }] }],
@@ -227,7 +228,10 @@ Your personality and tone:
                 try {
                     const res = await fetch(url, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${API_KEY}`
+                        },
                         body: JSON.stringify(payload)
                     });
 
