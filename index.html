@@ -16,9 +16,7 @@
     --jotty-bg: #202025;
     --user-bg: #2e2e38;
 }
-
 * { box-sizing: border-box; }
-
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
@@ -30,7 +28,6 @@ body {
     margin: 0;
     overflow: hidden;
 }
-
 .app-container {
     width: 100%;
     max-width: 640px;
@@ -40,38 +37,27 @@ body {
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     overflow: hidden;
 }
-
 .app-header {
     padding: 12px 20px;
-    background: rgba(24, 24, 27, 0.9);
+    background: rgba(24,24,27,0.9);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
-
 .app-title-area { display: flex; align-items: center; gap: 10px; }
-
 .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 8px; height: 8px;
     background-color: #22c55e;
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    box-shadow: 0 0 8px rgba(34,197,94,0.5);
 }
-
-.status-dot.bad {
-    background-color: #ef4444;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-}
-
+.status-dot.bad { background-color: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
 .app-name { font-weight: 600; font-size: 15px; }
-
 .header-actions { display: flex; gap: 8px; }
-
 .settings-btn {
     background: transparent;
     border: 1px solid var(--border-color);
@@ -82,12 +68,7 @@ body {
     cursor: pointer;
     transition: 0.2s;
 }
-
-.settings-btn:hover {
-    color: var(--text-main);
-    border-color: var(--accent-color);
-}
-
+.settings-btn:hover { color: var(--text-main); border-color: var(--accent-color); }
 .settings-panel {
     background: #18181e;
     border-bottom: 1px solid var(--border-color);
@@ -96,11 +77,8 @@ body {
     flex-direction: column;
     gap: 12px;
 }
-
 .settings-panel.hidden { display: none; }
-
 .field-group { display: flex; flex-direction: column; gap: 4px; }
-
 .field-group label {
     color: var(--text-muted);
     font-size: 11px;
@@ -108,7 +86,6 @@ body {
     letter-spacing: 0.5px;
     font-weight: 600;
 }
-
 .field-group input {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
@@ -119,11 +96,8 @@ body {
     outline: none;
     font-family: inherit;
 }
-
 .field-group input:focus { border-color: var(--accent-color); }
-
 .hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-
 #chat-stream {
     flex: 1;
     overflow-y: auto;
@@ -133,7 +107,6 @@ body {
     gap: 16px;
     scroll-behavior: smooth;
 }
-
 .message {
     max-width: 85%;
     padding: 12px 16px;
@@ -143,21 +116,18 @@ body {
     word-break: break-word;
     white-space: pre-wrap;
 }
-
 .message.jotty {
     background: var(--jotty-bg);
     border: 1px solid var(--border-color);
     align-self: flex-start;
     border-bottom-left-radius: 4px;
 }
-
 .message.user {
     background: var(--user-bg);
     color: #fff;
     align-self: flex-end;
     border-bottom-right-radius: 4px;
 }
-
 .message.system {
     background: transparent;
     color: var(--text-muted);
@@ -168,9 +138,7 @@ body {
     border: none;
     max-width: 90%;
 }
-
 .message.error { color: #f87171; }
-
 .input-container {
     padding: 16px;
     background: var(--panel-bg);
@@ -178,7 +146,6 @@ body {
     display: flex;
     gap: 10px;
 }
-
 #userInput {
     flex: 1;
     background: var(--bg-color);
@@ -190,9 +157,7 @@ body {
     outline: none;
     font-family: inherit;
 }
-
 #userInput:focus { border-color: var(--accent-color); }
-
 .send-btn {
     background: var(--accent-color);
     color: #fff;
@@ -204,7 +169,6 @@ body {
     cursor: pointer;
     transition: background 0.2s;
 }
-
 .send-btn:hover { background: var(--accent-hover); }
 .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
@@ -250,9 +214,6 @@ body {
     const API_URL = "https://openrouter.ai/api/v1/chat/completions";
     const TIMEOUT = 45000;
 
-    // Keeping the key in memory only. localStorage was serving up dead keys
-    // so we use sessionStorage (per-tab) and fall back to plain vars if even
-    // that's blocked inside an iframe.
     let apiKey = "";
     let model = "google/gemma-4-26b-a4b-it:free";
 
@@ -300,30 +261,21 @@ You are Jotty. Stay Jotty. Always.`;
 
     let sending = false;
 
-    // sessionStorage wraps in try/catch - sandboxed iframes will throw
     function loadSession(k) {
         try { return sessionStorage.getItem(k); } catch (e) { return null; }
     }
     function saveSession(k, v) {
-        try { sessionStorage.setItem(k, v); } catch (e) { /* nope, keep in memory */ }
+        try { sessionStorage.setItem(k, v); } catch (e) {}
     }
 
     const savedKey = loadSession("jotty_key");
-    if (savedKey) {
-        apiKeyInput.value = savedKey;
-        apiKey = savedKey;
-    }
+    if (savedKey) { apiKeyInput.value = savedKey; apiKey = savedKey; }
     const savedModel = loadSession("jotty_model");
-    if (savedModel) {
-        modelInput.value = savedModel;
-        model = savedModel;
-    }
+    if (savedModel) { modelInput.value = savedModel; model = savedModel; }
 
     refreshKeyHint();
 
-    toggleSettings.onclick = () => {
-        settingsPanel.classList.toggle("hidden");
-    };
+    toggleSettings.onclick = () => settingsPanel.classList.toggle("hidden");
 
     apiKeyInput.oninput = () => {
         apiKey = apiKeyInput.value.trim();
@@ -434,10 +386,9 @@ You are Jotty. Stay Jotty. Always.`;
             clearTimeout(timer);
             killMsg(loadingId);
 
-            // Grab raw text first so we can still see the body if it's not JSON
             const raw = await res.text();
             let data = null;
-            try { data = JSON.parse(raw); } catch (e) { /* leave it null */ }
+            try { data = JSON.parse(raw); } catch (e) {}
 
             if (!res.ok) {
                 console.error("OpenRouter HTTP " + res.status, {
@@ -451,15 +402,11 @@ You are Jotty. Stay Jotty. Always.`;
                 let hint = "";
 
                 if (res.status === 401) {
-                    hint = "\n\n-> 401 Unauthorized. Your key is being rejected by OpenRouter. Check that:\n" +
-                           "1. The key starts with sk-or-v1- and is complete\n" +
-                           "2. The key is ACTIVE at openrouter.ai/settings/keys\n" +
-                           "3. Your account has no holds\n" +
-                           "Console (F12) has the raw response.";
+                    hint = "\n\n-> 401 Unauthorized. Key rejected. Check it's active at openrouter.ai/settings/keys.";
                 } else if (res.status === 402) {
-                    hint = "\n\n-> 402 Payment Required. You have insufficient credits for this model. Try a :free model.";
+                    hint = "\n\n-> 402 Payment Required. No credits for this model. Try a :free model.";
                 } else if (res.status === 404) {
-                    hint = "\n\n-> 404 Model not found. The slug '" + mdl + "' is wrong or retired. Pick a current free model from openrouter.ai/models.";
+                    hint = "\n\n-> 404 Model not found. Slug '" + mdl + "' is retired. Pick one from openrouter.ai/models.";
                 } else if (res.status === 429) {
                     hint = "\n\n-> 429 Rate limited. Slow down or switch models.";
                 }
@@ -469,7 +416,7 @@ You are Jotty. Stay Jotty. Always.`;
             }
 
             if (data && data.error) {
-                console.error("OpenRouter API error object:", data.error);
+                console.error("OpenRouter API error:", data.error);
                 addMsg("API Error: " + (data.error.message || JSON.stringify(data.error)), "system error");
                 return;
             }
@@ -480,8 +427,8 @@ You are Jotty. Stay Jotty. Always.`;
             if (content) {
                 addMsg(content, "jotty");
             } else {
-                console.error("Unexpected response shape:", data);
-                addMsg("Unexpected response from model. Check console (F12) for details.", "system error");
+                console.error("Unexpected response:", data);
+                addMsg("Unexpected response. Check console (F12).", "system error");
             }
 
         } catch (err) {
@@ -490,11 +437,10 @@ You are Jotty. Stay Jotty. Always.`;
             console.error("Fetch failed:", err);
 
             if (err.name === "AbortError") {
-                addMsg("Request timed out after " + (TIMEOUT / 1000) + "s. Network or OpenRouter is slow.", "system error");
+                addMsg("Timed out after " + (TIMEOUT / 1000) + "s.", "system error");
             } else {
                 addMsg("Network Error: " + err.message +
-                       "\n\nIf this says 'Failed to fetch', it is usually CORS or a browser extension " +
-                       "(adblocker/privacy) stripping the Authorization header. Try in a clean browser profile.",
+                       "\n\nIf it says 'Failed to fetch', that's CORS or an adblocker. Try a clean browser profile.",
                        "system error");
             }
         } finally {
