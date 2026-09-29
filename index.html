@@ -71,15 +71,6 @@
             letter-spacing: -0.3px;
         }
 
-        .app-model {
-            font-size: 11px;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.05);
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
         #chat-stream {
             flex: 1;
             overflow-y: auto;
@@ -172,7 +163,6 @@
                 <div class="status-dot"></div>
                 <div class="app-name">Jotty Workspace Agent</div>
             </div>
-            <div class="app-model">gemini-3.5-flash-lite</div>
         </div>
         
         <div id="chat-stream">
@@ -181,20 +171,25 @@
         
         <div class="input-container">
             <input type="text" id="userInput" placeholder="Ask Jotty something..." autofocus>
-            <button onclick="sendToJotty()">Send</button>
+            <button type="button" id="sendBtn">Send</button>
         </div>
     </div>
 
     <script>
-        // credentials & config
         const API_KEY = "AQ.Ab8RN6KHCW8mVcjL5vgvb6dNvSVqp4515yE6j-zgIHt2emjxxw";
         const MODEL = "gemini-3.5-flash-lite";
 
         const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
 
+        // Hook up both Enter key and Button click cleanly
+        sendBtn.addEventListener('click', sendToJotty);
         inputField.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendToJotty();
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendToJotty();
+            }
         });
 
         async function sendToJotty() {
@@ -204,7 +199,6 @@
             addMsg(text, 'user');
             inputField.value = "";
 
-            // quick loading tag while waiting on API
             const loadingId = addMsg("Jotty is thinking...", 'system');
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
@@ -225,7 +219,6 @@ Your personality and tone:
                 }
             };
 
-            // retry loop just in case google hits us with rate limits
             let ok = false;
             let tries = 0;
             let resData = null;
