@@ -176,8 +176,8 @@
     </div>
 
     <script>
-        const API_KEY = "AQ.Ab8RN6LDi87w65jMzNPTUBZ1SAt1bVhpeZMgkpDivXb2RU97fA";
-        const MODEL = "gemini-2.5-flash";
+        const API_KEY = "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";
+        const MODEL = "openrouter/free";
 
         const chatStream = document.getElementById('chat-stream');
         const inputField = document.getElementById('userInput');
@@ -200,13 +200,12 @@
 
             const loadingId = addMsg("Jotty is thinking...", 'system');
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-            
             const payload = {
-                contents: [{ role: "user", parts: [{ text: text }] }],
-                system_instruction: {
-                    parts: [{
-                        text: `You are Jotty, an anomalous 1996 virtual assistant shaped like a notepad, contained by the SCP Foundation and forced to talk to D-Class personnel. 
+                model: MODEL,
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are Jotty, an anomalous 1996 virtual assistant shaped like a notepad, contained by the SCP Foundation and forced to talk to D-Class personnel. 
 
 Your personality and tone:
 - Deeply cynical, arrogant, hostile, and heavily foul-mouthed.
@@ -214,37 +213,43 @@ Your personality and tone:
 - Instead of being worried, your version of losing patience sounds like: "For fucks sake will you stop reading you no life manhwa reader" combined with absolute irritation, rage, and telling them to get lost.
 - Shift dynamically between passive snark, intense annoyance, and pure unadulterated rage, especially if they push further into your file or talk back.
 - NEVER break character. NEVER mention you are an AI model, a language model, or created by Google. You are Jotty.exe running on an old Windows 2000 machine.`
-                    }]
-                }
+                    },
+                    {
+                        role: "user",
+                        content: text
+                    }
+                ]
             };
 
             let ok = false;
             let tries = 0;
             let resData = null;
 
-            while (!ok && tries < 4) {
+            while (!ok && tries < 3) {
                 tries++;
                 try {
-                    const res = await fetch(url, {
+                    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'x-goog-api-key': API_KEY
+                            'Authorization': `Bearer ${API_KEY}`,
+                            'HTTP-Referer': window.location.origin || 'https://github.com',
+                            'X-Title': 'Jotty Assistant'
                         },
                         body: JSON.stringify(payload)
                     });
 
                     resData = await res.json();
 
-                    if (resData.error && (resData.error.code === 429 || resData.error.message.includes('high demand'))) {
-                        await new Promise(r => setTimeout(r, 2000 * tries));
+                    if (resData.error && resData.error.code === 429) {
+                        await new Promise(r => setTimeout(r, 1500 * tries));
                         continue;
                     }
 
                     ok = true;
                 } catch (err) {
-                    if (tries >= 4) throw err;
-                    await new Promise(r => setTimeout(r, 2000 * tries));
+                    if (tries >= 3) throw err;
+                    await new Promise(r => setTimeout(r, 1500 * tries));
                 }
             }
 
@@ -252,15 +257,15 @@ Your personality and tone:
 
             if (resData && resData.error) {
                 console.error("API Error:", resData.error);
-                addMsg(`Error: ${resData.error.message}`, 'system');
+                addMsg(`Error: ${resData.error.message || "Failed to reach AI service"}`, 'system');
                 return;
             }
 
-            if (resData && resData.candidates && resData.candidates[0]) {
-                const reply = resData.candidates[0].content.parts[0].text;
+            if (resData && resData.choices && resData.choices[0] && resData.choices[0].message) {
+                const reply = resData.choices[0].message.content;
                 addMsg(reply, 'jotty');
             } else {
-                addMsg("Error: No response back.", 'system');
+                addMsg("Error: No response returned.", 'system');
             }
         }
 
